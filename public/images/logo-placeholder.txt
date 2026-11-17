@@ -1,0 +1,4 @@
+Place your company logo here (logo.png or logo.jpg)
+Recommended size: 200x50px or similar aspect ratio
+Supported formats: PNG, JPG, SVG (base64 encoded for email compatibility)
+
