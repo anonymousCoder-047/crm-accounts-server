@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 import AuditTrail, { LogType, ErrorType } from '../models/AuditTrail'
+import { writableRoot, ensureDir } from './paths'
 
 // Base logs directory
-const logsDir = path.join(process.cwd(), 'logs')
+const logsDir = path.join(writableRoot, 'logs')
 
 // Subdirectories for different error types
 const errorDirs: Record<string, string> = {
@@ -15,11 +16,7 @@ const errorDirs: Record<string, string> = {
 }
 
 // Ensure all directories exist
-Object.values(errorDirs).forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-})
+Object.values(errorDirs).forEach(ensureDir)
 
 // Get date string in YYYY-MM-DD format
 function getDateString(): string {
@@ -36,9 +33,7 @@ function getLogFilePath(errorType: ErrorType | 'api' | 'info', date?: string): s
   const dateStr = date || getDateString()
   const dir = errorDirs[errorType] || logsDir
   // Ensure directory exists
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
+  ensureDir(dir)
   return path.join(dir, `${errorType}-${dateStr}.log`)
 }
 
@@ -46,10 +41,7 @@ function getLogFilePath(errorType: ErrorType | 'api' | 'info', date?: string): s
 function writeToFile(filePath: string, message: string): void {
   try {
     // Ensure directory exists
-    const dir = path.dirname(filePath)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
+    ensureDir(path.dirname(filePath))
 
     // Append to file
     fs.appendFileSync(filePath, message + '\n', 'utf8')

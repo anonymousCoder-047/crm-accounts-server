@@ -113,10 +113,15 @@ app.get('/api/health', (req, res) => {
 // Error handler middleware (must be last)
 app.use(errorHandler)
 
-app.listen(PORT, '0.0.0.0', () => {
-  const message = `Server is running on port ${PORT}`
-  console.log(message)
-  console.log(`Access from network: http://<your-ip>:${PORT}`)
-  // Log asynchronously without blocking
-  logInfo(message, { port: PORT, env: process.env.NODE_ENV || 'development' }, false).catch(console.error)
-})
+// On Vercel the app is invoked as a serverless handler - no listener needed
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    const message = `Server is running on port ${PORT}`
+    console.log(message)
+    console.log(`Access from network: http://<your-ip>:${PORT}`)
+    // Log asynchronously without blocking
+    logInfo(message, { port: PORT, env: process.env.NODE_ENV || 'development' }, false).catch(console.error)
+  })
+}
+
+export default app

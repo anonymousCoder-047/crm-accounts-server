@@ -12,6 +12,7 @@ import path from 'path'
 import fs from 'fs'
 import archiver from 'archiver'
 import crypto from 'crypto'
+import { writableRoot } from '../utils/paths'
 
 // Store expiry links for zip downloads (token -> { expenseId, expiresAt, zipPath })
 const expiryLinks = new Map<string, { expenseId: string; expiresAt: number; zipPath: string }>()
@@ -44,7 +45,7 @@ export const createExpenseEntry = async (req: Request, res: Response) => {
       : new Date().toISOString().split('T')[0]
     const expenseId = expense_id || `EXP-${Date.now()}`
     const folderName = `${expenseId} - ${dateStr}`
-    const targetDir = path.join(process.cwd(), 'uploads', 'expenses', folderName)
+    const targetDir = path.join(writableRoot, 'uploads', 'expenses', folderName)
     
     // Ensure directory exists
     if (!fs.existsSync(targetDir)) {
@@ -159,7 +160,7 @@ export const updateExpenseEntry = async (req: Request, res: Response) => {
       ? new Date(existingExpense.expense_date).toISOString().split('T')[0] 
       : new Date().toISOString().split('T')[0]
     const folderName = `${expenseId} - ${dateStr}`
-    const targetDir = path.join(process.cwd(), 'uploads', 'expenses', folderName)
+    const targetDir = path.join(writableRoot, 'uploads', 'expenses', folderName)
     
     // Ensure directory exists
     if (!fs.existsSync(targetDir)) {
@@ -199,7 +200,7 @@ export const updateExpenseEntry = async (req: Request, res: Response) => {
     // Delete old attachments if new ones are uploaded
     if (attachmentPaths.length > 0 && existingExpense.attachments) {
       existingExpense.attachments.forEach((oldPath: string) => {
-        const oldFilePath = path.join(process.cwd(), oldPath)
+        const oldFilePath = path.join(writableRoot, oldPath)
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath)
         }
@@ -484,7 +485,7 @@ export const deleteExpenseEntry = async (req: Request, res: Response) => {
     // Delete attachment files
     if (expense.attachments && expense.attachments.length > 0) {
       expense.attachments.forEach((attachmentPath: string) => {
-        const filePath = path.join(process.cwd(), attachmentPath)
+        const filePath = path.join(writableRoot, attachmentPath)
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath)
         }
@@ -496,7 +497,7 @@ export const deleteExpenseEntry = async (req: Request, res: Response) => {
         ? new Date(expense.expense_date).toISOString().split('T')[0] 
         : new Date().toISOString().split('T')[0]
       const folderName = `${expenseIdStr} - ${dateStr}`
-      const expenseDir = path.join(process.cwd(), 'uploads', 'expenses', folderName)
+      const expenseDir = path.join(writableRoot, 'uploads', 'expenses', folderName)
       if (fs.existsSync(expenseDir)) {
         try {
           const files = fs.readdirSync(expenseDir)
@@ -534,7 +535,7 @@ export const getExpenseAttachment = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'Attachment index out of range' })
     }
 
-    const filePath = path.join(process.cwd(), attachments[index])
+    const filePath = path.join(writableRoot, attachments[index])
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ success: false, message: 'File not found on server' })
     }
@@ -560,7 +561,7 @@ export const generateZipDownloadLink = async (req: Request, res: Response) => {
 
     if (attachments.length === 1) {
       // If only one file, return direct download link
-      const filePath = path.join(process.cwd(), attachments[0])
+      const filePath = path.join(writableRoot, attachments[0])
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ success: false, message: 'File not found on server' })
       }
@@ -575,7 +576,7 @@ export const generateZipDownloadLink = async (req: Request, res: Response) => {
 
     // Create zip file
     const zipFileName = `expense-${expense.expense_id}-${Date.now()}.zip`
-    const zipPath = path.join(process.cwd(), 'uploads', 'temp', zipFileName)
+    const zipPath = path.join(writableRoot, 'uploads', 'temp', zipFileName)
     const zipDir = path.dirname(zipPath)
     
     // Ensure temp directory exists
@@ -614,7 +615,7 @@ export const generateZipDownloadLink = async (req: Request, res: Response) => {
 
       // Add files to zip
       attachments.forEach((attachmentPath: string, index: number) => {
-        const filePath = path.join(process.cwd(), attachmentPath)
+        const filePath = path.join(writableRoot, attachmentPath)
         if (fs.existsSync(filePath)) {
           const fileName = path.basename(attachmentPath)
           archive.file(filePath, { name: fileName })

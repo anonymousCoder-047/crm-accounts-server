@@ -12,6 +12,7 @@ import path from 'path'
 import fs from 'fs'
 import archiver from 'archiver'
 import crypto from 'crypto'
+import { writableRoot } from '../utils/paths'
 
 export const createDeliveryOrderEntry = async (req: Request, res: Response) => {
   try {
@@ -42,7 +43,7 @@ export const createDeliveryOrderEntry = async (req: Request, res: Response) => {
     }
 
     const dateStr = date ? new Date(date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
-    const targetDir = path.join(process.cwd(), 'uploads', 'DO', `${invoiceNum}-${dateStr}`)
+    const targetDir = path.join(writableRoot, 'uploads', 'DO', `${invoiceNum}-${dateStr}`)
     
     // Ensure directory exists
     if (!fs.existsSync(targetDir)) {
@@ -200,7 +201,7 @@ export const updateDeliveryOrderEntry = async (req: Request, res: Response) => {
     }
 
     const dateStr = date ? new Date(date).toISOString().split('T')[0] : (existingOrder.date ? new Date(existingOrder.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
-    const targetDir = path.join(process.cwd(), 'uploads', 'DO', `${invoiceNum}-${dateStr}`)
+    const targetDir = path.join(writableRoot, 'uploads', 'DO', `${invoiceNum}-${dateStr}`)
     
     // Ensure directory exists
     if (!fs.existsSync(targetDir)) {
@@ -241,7 +242,7 @@ export const updateDeliveryOrderEntry = async (req: Request, res: Response) => {
     if (attachmentPaths.length > 0) {
       const oldAttachments = existingOrder.attachments || (existingOrder.attachment ? [existingOrder.attachment] : [])
       oldAttachments.forEach((oldPath: string) => {
-        const oldFilePath = path.join(process.cwd(), oldPath)
+        const oldFilePath = path.join(writableRoot, oldPath)
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath)
         }
@@ -323,7 +324,7 @@ export const deleteDeliveryOrderEntry = async (req: Request, res: Response) => {
     // Delete all attachment files if exist
     const attachments = order.attachments || (order.attachment ? [order.attachment] : [])
     attachments.forEach((attachmentPath: string) => {
-      const filePath = path.join(process.cwd(), attachmentPath)
+      const filePath = path.join(writableRoot, attachmentPath)
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath)
       }
@@ -372,7 +373,7 @@ export const getDeliveryOrderAttachment = async (req: Request, res: Response) =>
       return res.status(404).json({ success: false, message: 'Attachment index out of range' })
     }
 
-    const filePath = path.join(process.cwd(), attachments[index])
+    const filePath = path.join(writableRoot, attachments[index])
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ success: false, message: 'File not found on server' })
     }
@@ -398,7 +399,7 @@ export const generateZipDownloadLink = async (req: Request, res: Response) => {
 
     if (attachments.length === 1) {
       // If only one file, return direct download link
-      const filePath = path.join(process.cwd(), attachments[0])
+      const filePath = path.join(writableRoot, attachments[0])
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ success: false, message: 'File not found on server' })
       }
@@ -413,7 +414,7 @@ export const generateZipDownloadLink = async (req: Request, res: Response) => {
 
     // Create zip file
     const zipFileName = `delivery-order-${order.serialNumber}-${Date.now()}.zip`
-    const zipPath = path.join(process.cwd(), 'uploads', 'temp', zipFileName)
+    const zipPath = path.join(writableRoot, 'uploads', 'temp', zipFileName)
     const zipDir = path.dirname(zipPath)
     
     // Ensure temp directory exists
@@ -452,7 +453,7 @@ export const generateZipDownloadLink = async (req: Request, res: Response) => {
 
       // Add files to zip
       attachments.forEach((attachmentPath: string, index: number) => {
-        const filePath = path.join(process.cwd(), attachmentPath)
+        const filePath = path.join(writableRoot, attachmentPath)
         if (fs.existsSync(filePath)) {
           const fileName = path.basename(attachmentPath)
           archive.file(filePath, { name: fileName })

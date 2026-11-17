@@ -1,18 +1,14 @@
 import multer from 'multer'
 import path from 'path'
-import fs from 'fs'
 import { Request } from 'express'
+import { writableRoot, ensureDir } from '../utils/paths'
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'uploads')
+const uploadsDir = path.join(writableRoot, 'uploads')
 const doDir = path.join(uploadsDir, 'DO')
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true })
-}
-if (!fs.existsSync(doDir)) {
-  fs.mkdirSync(doDir, { recursive: true })
-}
+ensureDir(uploadsDir)
+ensureDir(doDir)
 
 // Configure storage for delivery order attachments
 // Note: Directory structure will be handled in controller after fetching invoice number
@@ -20,9 +16,7 @@ const storage = multer.diskStorage({
   destination: (req: Request, file, cb) => {
     // Temporary directory - files will be moved to correct location in controller
     const tempDir = path.join(doDir, 'temp')
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true })
-    }
+    ensureDir(tempDir)
     cb(null, tempDir)
   },
   filename: (req: Request, file, cb) => {
@@ -66,9 +60,7 @@ export const uploadDeliveryOrder = multer({
 // Ensure expenses directory exists
 const expensesDir = path.join(uploadsDir, 'expenses')
 
-if (!fs.existsSync(expensesDir)) {
-  fs.mkdirSync(expensesDir, { recursive: true })
-}
+ensureDir(expensesDir)
 
 // Configure storage for expense attachments
 // Note: Directory structure will be handled in controller after getting expense_id and date
@@ -76,9 +68,7 @@ const expenseStorage = multer.diskStorage({
   destination: (req: Request, file, cb) => {
     // Temporary directory - files will be moved to correct location in controller
     const tempDir = path.join(expensesDir, 'temp')
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true })
-    }
+    ensureDir(tempDir)
     cb(null, tempDir)
   },
   filename: (req: Request, file, cb) => {
